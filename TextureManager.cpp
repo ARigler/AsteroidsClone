@@ -27,7 +27,7 @@ void TextureManager::setAlpha(int index, Uint8 alpha) {
 	setData(index, mTextureMetadata);
 }
 
-void TextureManager::render(SDL_Renderer* renderer, int index, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
+void TextureManager::render(SDL_Renderer* renderer, int index, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, float scale, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
 {
 	if(index < textureList.size()) {
 
@@ -76,7 +76,7 @@ void TextureManager::render(SDL_Renderer* renderer, int index, int x, int y, Uin
 	}
 }
 
-void TextureManager::render(SDL_Renderer* renderer, std::string text, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
+void TextureManager::render(SDL_Renderer* renderer, std::string text, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, float scale, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
 {
 	if (textTextureCache.find(text) != textTextureCache.end()) {
 
@@ -114,7 +114,7 @@ void TextureManager::render(SDL_Renderer* renderer, std::string text, int x, int
 	}
 }
 
-void TextureManager::render(SDL_Renderer* renderer, SDL_Texture* mTexture, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
+void TextureManager::render(SDL_Renderer* renderer, SDL_Texture* mTexture, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, float scale, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
 {
 	SDL_Point size;
 	SDL_QueryTexture(mTexture, NULL, NULL, &size.x, &size.y);
@@ -159,14 +159,6 @@ TextMetadata TextureManager::fetchTextData(std::string text) {
 	}
 }
 
-
-void TextureManager::addAnimation(AnimMetadata animData) {
-	///if there's no animation data targeting this asset
-	if(!animMetadataExists(animData.resourceIndex))
-	{
-		animMetadataList.push_back(animData);
-	}
-}
 
 bool TextureManager::loadFromFile(std::string path, SDL_Renderer* renderer,Uint8 alpha,ColorMod colorMod,SDL_BlendMode blending,ColorMod colorKey)
 {

@@ -41,7 +41,17 @@ bool Game::loadMedia() {
 		SDL_Log("Failed to load lucida console font! SDL_ttf Error: %s\n", TTF_GetError());
 		success = false;
 	}
-	//TextureManager::getInstance()->loadFromFile("assets/image.png",Engine::getInstance()->pass_renderer(),0xFF,{0xFF,0xFF,0xFF},SDL_BLENDMODE_BLEND,{0,0xFF,0xFF})
+	SDL_Renderer* renderer = Engine::getInstance()->pass_renderer();
+	TextureManager* texMan = TextureManager::getInstance();
+	texMan->loadFromFile("assets/Ship 3.png", renderer);
+	texMan->loadFromFile("assets/Space.png", renderer);
+	texMan->loadFromFile("assets/A1.png", renderer);
+	texMan->loadFromFile("assets/A2.png", renderer);
+	texMan->loadFromFile("assets/M1.png", renderer);
+	texMan->loadFromFile("assets/M4.png", renderer);
+	texMan->loadFromFile("assets/P9.png", renderer);
+	texMan->loadFromFile("assets/P10.png", renderer);
+	renderer = nullptr;
 
 	return success;
 }
@@ -58,6 +68,11 @@ bool Game::init() {
 	mActors = std::vector<Actor*>();
 	mPendingActors = std::vector<Actor*>();
 	mRenderLookupTable = std::multimap<int, SpriteComponent*>();
+
+	const int numAsteroids = 20;
+	for (int i = 0; i < numAsteroids; i++) {
+		mActors.push_back(new Asteroid(this));
+	}
 
 	return success;
 }
@@ -90,6 +105,8 @@ void Game::update(float deltaTime) {
 	mUpdatingActors = true;
 	//populate update functions in a multimap based on update order
 	for (Actor* actor : mActors) {
+		//update actor and then populate the lookup table with components' update order and functions.
+		actor->update(deltaTime);
 		for (Component* component : actor->getComponents()) {
 			mUpdateLookupTable.insert(std::make_pair(component->get_uO(), std::bind(&Component::update, component, deltaTime)));
 		}

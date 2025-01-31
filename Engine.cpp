@@ -25,7 +25,7 @@ bool Engine::init() {
 		}
 	}
 	//Create window
-	gWindow = SDL_CreateWindow("SDL Pong", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	gWindow = SDL_CreateWindow("SDL2 Asteroids", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 	if (gWindow == NULL)
 	{
 		printf("Window could not be created! %s\n", SDL_GetError());
@@ -45,6 +45,13 @@ bool Engine::init() {
 			//Initialize renderer color
 			SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
+			//initialize SDL_Image
+			int imgFlags = IMG_INIT_PNG;
+			if (!(IMG_Init(imgFlags) & imgFlags))
+			{
+				printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+				success = false;
+			}
 			//Initialize SDL_ttf
 			if (TTF_Init() == -1)
 			{
@@ -70,6 +77,7 @@ void Engine::close() {
 
 	Mix_Quit();
 	TTF_Quit();
+	IMG_Quit();
 	SDL_Quit();
 }
 

@@ -3,6 +3,7 @@
 #define RSOS_ACTOR
 #include"Structures.h"
 #include"Component.h"
+#include"Math.h"
 #include<vector>
 class Actor {
 public:
@@ -11,7 +12,7 @@ public:
 		EPaused,
 		EDead,
 	};
-	Actor(class Game* game, Vector2 pos ={0.f,0.f},float scale=1.0f,float rot=0.0f);
+	Actor(class Game* game, Vector2 pos=Vector2::Zero, float scale = 1.0f, float rot = 0.0f);
 	virtual ~Actor();
 	void update(float deltaTime);
 	void set_state(EngineState stateArg) {
@@ -23,9 +24,11 @@ public:
 	Vector2 getPos() const { return mPos; }
 	float getRot() const { return mRotation; }
 	float getSca() const { return mScale; }
+	Vector2 getForward() const { return Vector2(Math::Cos(mRotation), -Math::Sin(mRotation)); }
 	std::vector<Component*> getComponents() const {
 		return mComponents;
 	}
+	void addComponent(class Component* component) { mComponents.push_back(component); }
 	EngineState get_state() {
 		return eState;
 	}
@@ -39,5 +42,16 @@ private:
 	class Game* mGame;
 };
 
+class Ship : public Actor {
+public:
+	Ship(class Game* game, Vector2 pos = Vector2::Zero, float scale = 1.0f, float rot = 0.0f);
+	void updateActor(float deltatime) override;
+	void processKeyboard(const uint8_t* state);;
+	
+};
 
+class Asteroid : public Actor {
+public:
+	Asteroid(class Game*);
+};
 #endif

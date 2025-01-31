@@ -6,8 +6,7 @@ struct Point {
 	int x, y;
 };
 
-struct Vector2 {
-	float x, y;
+struct DualFlag {
+	bool xFlag, yFlag;
 };
-
 #endif

@@ -3,6 +3,8 @@
 #define RSOS_COMPONENT
 #include"Structures.h"
 #include"TextureManager.h"
+#include"Timer.h"
+#include"Math.h"
 #include<vector>
 #include<SDL.h>
 #include<map>
@@ -38,37 +40,66 @@ class AnimSpriteComponent : public SpriteComponent {
 public:
 	AnimSpriteComponent(class Actor* owner, int texIndex,int cWidth, int cHeight, int fps,bool loop=false, int drawOrder = 100, int uO = 100);
 	void update(float deltaTime) override;
-	void setTexIndex(int texIndex);
+	void Draw(TextureManager* textureManager, double angle, SDL_RendererFlip renderFlip = SDL_FLIP_NONE) override;
+	void setTexIndex(TextureManager* texMan,int index) { texIndex=index; }
 	float getAnimFPS()const { return fps; }
+	Point getOffset()const { return mOffset; }
+	void animate();
+	void resetAnimation();
 	void setAnimFPS(int afps) { fps = afps; }
+	void setOffset(int x, int y) { mOffset.x = x; mOffset.y = y; }
 	Point getCellDimensions()const { return { cellWidth,cellHeight }; }
 	void setCellDimensions(int w, int h) { cellWidth = w; cellHeight = h; }
 	void addSequence(int length);
 	void removeSequence(int sequence);
 	void resizeSequence(int sequence, int length);
+	void changeActiveSequence(int sequence);
 private:
-	int resourceIndex;
 	int fps;
 	int cellWidth;
 	int cellHeight;
 	std::map<int, int> sequences;
-	bool mloop;
+	bool mLoop;
+	bool mAnimating;
+	RSOS_Timer animationTimer;
 	Point currentCell;
+	Point mOffset;
 };
 
 class BGSpriteComponent : public SpriteComponent {
 public:
-	BGSpriteComponent(class Actor* owner, int texIndex, int drawOrder = 100, int uO = 100);
+	BGSpriteComponent(class Actor* owner, int texIndex, float clipW, float clipH, float scrollSpeedX, float scrollSpeedY, int drawOrder = 100, int uO = 100);
 	void update(float deltaTime) override;
-	void setTexIndex(int texIndex);
-	void setScreenSize(const Vector2& size) { mScreenSize = size; }
-	void setScrollSpeed(float speed) { mScrollSpeed = speed; }
+	void Draw(TextureManager* textureManager, double angle, SDL_RendererFlip renderFlip = SDL_FLIP_NONE) override;
+	void setTexIndex(TextureManager* texMan, int index) {
+		if (texMan->fetchTextureListLength() > index && index >= 0) {
+			texIndex = index;
+		}
+	}
+	void setClipSize(const Vector2& size) { mClipSize = size; }
+	void setScrollSpeed(float speedX, float speedY) { mScrollSpeed.x = speedX; mScrollSpeed.y = speedY; }
+	void scroll(bool x, bool y) { mScrolling.xFlag = x; mScrolling.yFlag = y; }
 	int getTexIndex()const { return texIndex; }
-	float getScrollSpeed()const { return mScrollSpeed; }
+	Vector2 getScrollSpeed() const { return mScrollSpeed; }
 private:
-	int texIndex;
 	Vector2 mOffset;
-	Vector2 mScreenSize;
-	float mScrollSpeed;
+	Vector2 mClipSize;
+	Vector2 mScrollSpeed;
+	DualFlag mScrolling;
+	DualFlag mLooping;
 };
+
+class MoveComponent : public Component {
+public:
+	MoveComponent(class Actor* owner, int updateOrder = 10);
+	void update(float deltaTime) override;
+	float getAngularSpeed()const { return mAngularSpeed; }
+	float getForwardSpeed()const { return mForwardSpeed; }
+	void setAngularSpeed(float speed) { mAngularSpeed = speed; }
+	void setForwardSpeed(float speed) { mForwardSpeed = speed; }
+private:
+	float mAngularSpeed;
+	float mForwardSpeed;
+};
+
 #endif
