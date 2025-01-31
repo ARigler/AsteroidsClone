@@ -4,6 +4,7 @@
 #include"TextureManager.h"
 #include"Component.h"
 #include"Random.h"
+#include"Math.h"
 #include<iostream>
 #include<string>
 #include<algorithm>
@@ -48,6 +49,7 @@ bool Game::loadMedia() {
 	texMan->loadFromFile("assets/Space.png", renderer);
 	texMan->loadFromFile("assets/A1.png", renderer);
 	texMan->loadFromFile("assets/A2.png", renderer);
+	texMan->loadFromFile("assets/P7.png", renderer);
 	texMan->loadFromFile("assets/M1.png", renderer);
 	texMan->loadFromFile("assets/M4.png", renderer);
 	texMan->loadFromFile("assets/P9.png", renderer);
@@ -73,9 +75,10 @@ bool Game::init() {
 	mPendingActors = std::vector<Actor*>();
 	mRenderLookupTable = std::multimap<int, SpriteComponent*>();
 
+	add_actor(std::move(new Ship(this,Vector2(Engine::getInstance()->SCREEN_WIDTH/2.0f,Engine::getInstance()->SCREEN_HEIGHT/2.0f))));
 	const int numAsteroids = 20;
 	for (int i = 0; i < numAsteroids; i++) {
-		add_actor(new Asteroid(this));
+		add_actor(std::move(new Asteroid(this)));
 	}
 
 	return success;
@@ -93,17 +96,30 @@ void Game::close() {
 
 void Game::processInput() {
 	SDL_Event e;
-	//handle/poll events on queue
-	while (SDL_PollEvent(&e) != 0) {
-		//user requests quit
-		if (e.type == SDL_QUIT) {
+	while (SDL_PollEvent(&e))
+	{
+		switch (e.type)
+		{
+		case SDL_QUIT:
 			quit = true;
-		}
-		else if (e.type == SDL_KEYDOWN) {
-			
+			break;
 		}
 	}
+
+	const Uint8* keyState = SDL_GetKeyboardState(NULL);
+	if (keyState[SDL_SCANCODE_ESCAPE])
+	{
+		quit = false;
+	}
+
+	mUpdatingActors = true;
+	for (auto actor : mActors)
+	{
+		actor->processInput(keyState);
+	}
+	mUpdatingActors = false;
 }
+
 
 void Game::update(float deltaTime) {
 	mUpdatingActors = true;
@@ -112,17 +128,17 @@ void Game::update(float deltaTime) {
 		//update actor and then populate the lookup table with components' update order and functions.
 		actor->update(deltaTime);
 		for (Component* component : actor->getComponents()) {
-			SDL_Log("Inserting into update lookup table");
 			mUpdateLookupTable.insert({ component->get_uO(), std::bind(&Component::update, component, deltaTime) });
 		}
+
+		//execute update functions based on update order (ascending)
+		for (auto element : mUpdateLookupTable) {
+			element.second(deltaTime);
+		}
+		mUpdateLookupTable.clear();
 	}
 
-	//execute update functions based on update order (ascending)
-	for (auto element : mUpdateLookupTable) {
-		element.second(deltaTime);
-	}
 
-	mUpdateLookupTable.clear();
 	mUpdatingActors = false;
 	for (auto pending : mPendingActors) {
 		mActors.emplace_back(pending);
@@ -156,21 +172,25 @@ void Game::render() {
 	for (Actor* actor : mActors) {
 		auto components = actor->getComponents();
 		for (Component* component : components) {
-			SpriteComponent* spriteComponent = dynamic_cast<SpriteComponent*>(component);
-			if (spriteComponent != nullptr) {
+			if (component->get_cType() == ComponentType::SpriteComponent) {
+				SpriteComponent* spriteComponent = dynamic_cast<SpriteComponent*>(component);
 				int drawOrder = spriteComponent->getDrawOrder();
-				SDL_Log("Inserting into render lookup table %p at drawOrder %i",spriteComponent,spriteComponent->getDrawOrder());
 				mRenderLookupTable.insert({ drawOrder, spriteComponent });
+				spriteComponent = nullptr;
 			}
-			spriteComponent = nullptr;
+			else if (component->get_cType() == ComponentType::AnimSpriteComponent) {
+				AnimSpriteComponent* aniSprite = dynamic_cast<AnimSpriteComponent*>(component);
+				int drawOrder = aniSprite->getDrawOrder();
+				mRenderLookupTable.insert({ drawOrder, aniSprite });
+				aniSprite = nullptr;
+			}
 		}
 				//if there's an animation metadata struct that points to this index, use the animation metadata and play animations instead of a static image
 	}
 	for (auto element : mRenderLookupTable) {
-		angle = 180 * (element.second->passOwner()->getRot()) / 3.14159;
+		angle = Math::ToDegrees(element.second->passOwner()->getRot());
 		//render static image
 		element.second->Draw(texMan, angle);
-		SDL_Log("Drawing element, %p", element.second);
 	}
 
 	mRenderLookupTable.clear();
@@ -201,7 +221,6 @@ void Game::runGame() {
 			runFrame(deltaTime);
 			frameTimer.reset();
 		}
-		SDL_Log("deltaTime = %f", deltaTime);
 		if (deltaTime < frameCap) {
 			SDL_Delay(static_cast<Uint32>((frameCap - deltaTime) * 1000.0f)); // Convert to milliseconds
 		}

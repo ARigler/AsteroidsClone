@@ -8,6 +8,7 @@
 Component::Component(class Actor* owner, int uO){
 	mOwner = owner;
 	mUpdateOrder = uO;
+	cType = ComponentType::Component;
 }
 
 Component::~Component() {
@@ -38,9 +39,10 @@ SpriteComponent::SpriteComponent(class Actor* owner, int texIndex, int drawOrder
 	mDrawOrder = drawOrder;
 	mOwner = owner;
 	SetTexture(TextureManager::getInstance(), texIndex);
+	cType = ComponentType::SpriteComponent;
 }
 
-AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int texIndex, int cWidth, int cHeight, int fpsA, bool loop, Point offset, int drawOrder, int uO):SpriteComponent(owner,texIndex,drawOrder,uO)
+AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int texIndex, int cWidth, int cHeight, int fpsA, bool loop, Point offset, float aOffset, int drawOrder, int uO):SpriteComponent(owner,texIndex,drawOrder,uO)
 {
 	cellWidth = cWidth;
 	cellHeight = cHeight;
@@ -51,7 +53,8 @@ AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int texIndex, int cWidth,
 	animationTimer = RSOS_Timer();
 	mAnimating = false;
 	mOffset = offset;
-
+	angleOffset = aOffset;
+	cType = ComponentType::AnimSpriteComponent;
 }
 
 void AnimSpriteComponent::update(float deltaTime) {
@@ -101,7 +104,8 @@ void AnimSpriteComponent::Draw(TextureManager* textureManager, double angle, SDL
 	SDL_Rect clip;
 	clip = { mOffset.x,mOffset.y,cellWidth,cellHeight };
 	SDL_Rect* clipP = &clip;
-	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, adjustedStart.x, adjustedStart.y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode, mOwner->getSca(), angle, clipP);
+	double adjustedAngle = angleOffset-angle;
+	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, mOwner->getPos().x, mOwner->getPos().y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode, mOwner->getSca(), adjustedAngle, clipP);
 	clipP = nullptr;
 }
 
@@ -145,6 +149,7 @@ BGSpriteComponent::BGSpriteComponent(Actor* owner, int texIndex, float clipW, fl
 	mScrolling.xFlag = false;
 	mScrolling.xFlag = false;
 	mLooping = { false,false };
+	cType = ComponentType::BGSpriteComponent;
 }
 
 void BGSpriteComponent::update(float deltaTime) {
@@ -226,6 +231,87 @@ void MoveComponent::update(float deltaTime) {
 		Vector2 pos = passOwner()->getPos();
 		pos.x += (mOwner->getForward().x)*mForwardSpeed * deltaTime;
 		pos.y += (mOwner->getForward().y)*mForwardSpeed * deltaTime;
-		mOwner->set_pos(pos.x,pos.y);
+		mOwner->set_pos(pos);
 	}
+}
+
+InputComponent::InputComponent(class Actor* owner) :MoveComponent(owner) {
+	SetForwardKey(0);
+	SetBackKey(0);
+	SetClockwiseKey(0);
+	SetCounterClockwiseKey(0);
+	cType = ComponentType::InputComponent;
+}
+
+void InputComponent::processInput(const uint8_t* keyState)
+{
+	// Calculate forward speed for MoveComponent
+	AnimSpriteComponent* animSprite=nullptr;
+	for (auto component : mOwner->getComponents()) {
+		if (component->get_cType() == ComponentType::AnimSpriteComponent) {
+			animSprite = dynamic_cast<AnimSpriteComponent*>(component);
+		}
+	}
+	float forwardSpeed = 0.0f;
+	if (keyState[mForwardKey])
+	{
+		if (animSprite != nullptr) {
+		  if(!animSprite->isAnimating())
+			{
+				animSprite->animate();
+			}
+		}
+		forwardSpeed += mMaxForwardSpeed;
+	}
+	else if (animSprite != nullptr && animSprite->isAnimating()) {
+		animSprite->animate();
+	}
+	if (keyState[mBackKey])
+	{
+		forwardSpeed -= mMaxForwardSpeed;
+	}
+	setForwardSpeed(forwardSpeed);
+
+	// Calculate angular speed for MoveComponent
+	float angularSpeed = 0.0f;
+	if (keyState[mClockwiseKey])
+	{
+		angularSpeed += mMaxAngularSpeed;
+	}
+	if (keyState[mCounterClockwiseKey])
+	{
+		angularSpeed -= mMaxAngularSpeed;
+	}
+	setAngularSpeed(angularSpeed);
+	animSprite = nullptr;
+}
+
+CircleComponent::CircleComponent(class Actor* owner)
+	:Component(owner)
+{
+	SetRadius(0.0f);
+	cType = ComponentType::CircleComponent;
+}
+
+const Vector2& CircleComponent::GetCenter() const
+{
+	return mOwner->getPos();
+}
+
+float CircleComponent::GetRadius() const
+{
+	return mOwner->getSca() * mRadius;
+}
+
+bool Intersect(const CircleComponent& a, const CircleComponent& b)
+{
+	// Calculate distance squared
+	Vector2 diff = a.GetCenter() - b.GetCenter();
+	float distSq = diff.LengthSq();
+
+	// Calculate sum of radii squared
+	float radiiSq = a.GetRadius() + b.GetRadius();
+	radiiSq *= radiiSq;
+
+	return distSq <= radiiSq;
 }

@@ -27,6 +27,7 @@ public:
 	const int FRAME_CAP=60;
 	void add_actor(Actor* actor);
 	void remove_actor(Actor* actor);
+	std::vector<Actor*> getActors() { return mActors; }
 private:
 	void runFrame(float deltaTime);
 	void processInput();
