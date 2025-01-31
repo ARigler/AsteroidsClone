@@ -30,7 +30,6 @@ void TextureManager::setAlpha(int index, Uint8 alpha) {
 void TextureManager::render(SDL_Renderer* renderer, int index, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, float scale, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
 {
 	if(index < textureList.size()) {
-
 		SDL_Texture* mTexture = textureList[index];
 		TextureMetadata mTextureMetadata = fetchData(index);
 

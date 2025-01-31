@@ -48,7 +48,7 @@ void RSOS_Timer::reset() {
 	mStarted = true;
 	mPaused = false;
 
-	mStartTicks = 0;
+	mStartTicks = SDL_GetTicks();
 	mPausedTicks = 0;
 }
 
@@ -119,7 +119,7 @@ void RSOS_Perf_Timer::reset() {
 	mStarted = true;
 	mPaused = false;
 
-	mStartTicks = 0;
+	mStartTicks = SDL_GetPerformanceCounter();
 	mPausedTicks = 0;
 }
 

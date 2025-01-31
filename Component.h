@@ -38,7 +38,7 @@ protected:
 
 class AnimSpriteComponent : public SpriteComponent {
 public:
-	AnimSpriteComponent(class Actor* owner, int texIndex,int cWidth, int cHeight, int fps,bool loop=false, int drawOrder = 100, int uO = 100);
+	AnimSpriteComponent(class Actor* owner, int texIndex, int cWidth, int cHeight, int fps, bool loop = false, Point offset = {0,0}, int drawOrder = 100, int uO = 100);
 	void update(float deltaTime) override;
 	void Draw(TextureManager* textureManager, double angle, SDL_RendererFlip renderFlip = SDL_FLIP_NONE) override;
 	void setTexIndex(TextureManager* texMan,int index) { texIndex=index; }

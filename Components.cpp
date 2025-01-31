@@ -20,6 +20,7 @@ void Component::update(float deltaTime) {
 
 void SpriteComponent::Draw(TextureManager* textureManager, double angle,SDL_RendererFlip renderFlip) {
 	TextureMetadata mTextureMetadata = textureManager->fetchData(texIndex);
+	SDL_Log("Owner positions, %f,%f", mOwner->getPos().x, mOwner->getPos().y);
 	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, mOwner->getPos().x, mOwner->getPos().y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode,mOwner->getSca(),angle);
 }
 
@@ -39,7 +40,7 @@ SpriteComponent::SpriteComponent(class Actor* owner, int texIndex, int drawOrder
 	SetTexture(TextureManager::getInstance(), texIndex);
 }
 
-AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int texIndex, int cWidth, int cHeight, int fpsA, bool loop, int drawOrder, int uO):SpriteComponent(owner,texIndex,drawOrder,uO)
+AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int texIndex, int cWidth, int cHeight, int fpsA, bool loop, Point offset, int drawOrder, int uO):SpriteComponent(owner,texIndex,drawOrder,uO)
 {
 	cellWidth = cWidth;
 	cellHeight = cHeight;
@@ -49,6 +50,7 @@ AnimSpriteComponent::AnimSpriteComponent(Actor* owner, int texIndex, int cWidth,
 	fps = fpsA;
 	animationTimer = RSOS_Timer();
 	mAnimating = false;
+	mOffset = offset;
 
 }
 
@@ -142,6 +144,7 @@ BGSpriteComponent::BGSpriteComponent(Actor* owner, int texIndex, float clipW, fl
 	mScrollSpeed.y = scrollSpeedY;
 	mScrolling.xFlag = false;
 	mScrolling.xFlag = false;
+	mLooping = { false,false };
 }
 
 void BGSpriteComponent::update(float deltaTime) {
@@ -207,7 +210,8 @@ void BGSpriteComponent::Draw(TextureManager* textureManager, double angle, SDL_R
 }
 
 MoveComponent::MoveComponent(class Actor* owner, int uO) : Component(owner,uO) {
-
+	mAngularSpeed = 0.0f;
+	mForwardSpeed = 0.0f;
 }
 
 void MoveComponent::update(float deltaTime) {
@@ -220,7 +224,7 @@ void MoveComponent::update(float deltaTime) {
 	if (!Math::NearZero(mForwardSpeed))
 	{
 		Vector2 pos = passOwner()->getPos();
-		pos.x += (mOwner->getForward().x)*mForwardSpeed*deltaTime;
+		pos.x += (mOwner->getForward().x)*mForwardSpeed * deltaTime;
 		pos.y += (mOwner->getForward().y)*mForwardSpeed * deltaTime;
 		mOwner->set_pos(pos.x,pos.y);
 	}

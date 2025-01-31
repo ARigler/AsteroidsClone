@@ -3,6 +3,7 @@
 #include"Timer.h"
 #include"TextureManager.h"
 #include"Component.h"
+#include"Random.h"
 #include<iostream>
 #include<string>
 #include<algorithm>
@@ -59,11 +60,14 @@ bool Game::loadMedia() {
 bool Game::init() {
 	bool success = true;
 	quit = false;
+	SDL_Log("Initializing");
 
 	if (!loadMedia()) {
 		SDL_Log("Loading assets failed!");
 		success = false;
 	}
+
+	Random::Init();
 
 	mActors = std::vector<Actor*>();
 	mPendingActors = std::vector<Actor*>();
@@ -71,7 +75,7 @@ bool Game::init() {
 
 	const int numAsteroids = 20;
 	for (int i = 0; i < numAsteroids; i++) {
-		mActors.push_back(new Asteroid(this));
+		add_actor(new Asteroid(this));
 	}
 
 	return success;
@@ -108,7 +112,8 @@ void Game::update(float deltaTime) {
 		//update actor and then populate the lookup table with components' update order and functions.
 		actor->update(deltaTime);
 		for (Component* component : actor->getComponents()) {
-			mUpdateLookupTable.insert(std::make_pair(component->get_uO(), std::bind(&Component::update, component, deltaTime)));
+			SDL_Log("Inserting into update lookup table");
+			mUpdateLookupTable.insert({ component->get_uO(), std::bind(&Component::update, component, deltaTime) });
 		}
 	}
 
@@ -154,7 +159,8 @@ void Game::render() {
 			SpriteComponent* spriteComponent = dynamic_cast<SpriteComponent*>(component);
 			if (spriteComponent != nullptr) {
 				int drawOrder = spriteComponent->getDrawOrder();
-				mRenderLookupTable.insert(std::make_pair(drawOrder, spriteComponent));
+				SDL_Log("Inserting into render lookup table %p at drawOrder %i",spriteComponent,spriteComponent->getDrawOrder());
+				mRenderLookupTable.insert({ drawOrder, spriteComponent });
 			}
 			spriteComponent = nullptr;
 		}
@@ -164,6 +170,7 @@ void Game::render() {
 		angle = 180 * (element.second->passOwner()->getRot()) / 3.14159;
 		//render static image
 		element.second->Draw(texMan, angle);
+		SDL_Log("Drawing element, %p", element.second);
 	}
 
 	mRenderLookupTable.clear();
@@ -183,17 +190,20 @@ void Game::runFrame(float deltaTime) {
 void Game::runGame() {
 	//run the first frame with a dummy timestep so can calculate deltaTime
 	RSOS_Perf_Timer frameTimer;
-	float timeStep = (1.f/FRAME_CAP) - (1.f / FRAME_CAP);
+	float frameCap = (1.f/FRAME_CAP);
 	frameTimer.start();
-	float deltaTime = timeStep;
-	
+	float deltaTime = frameCap;
+
 	while (!quit) {
-		if (timeStep >= 0.0f) {
-			runFrame(deltaTime);
-		}
 		Uint64 frameTicks = frameTimer.getTicks();
-		frameTimer.reset();
-		deltaTime = frameTicks / 1000.0f;
-		timeStep = deltaTime - (1.f / FRAME_CAP);
+		deltaTime = static_cast<float>(frameTicks) / static_cast<float>(SDL_GetPerformanceFrequency());
+		if (deltaTime >= frameCap) {
+			runFrame(deltaTime);
+			frameTimer.reset();
+		}
+		SDL_Log("deltaTime = %f", deltaTime);
+		if (deltaTime < frameCap) {
+			SDL_Delay(static_cast<Uint32>((frameCap - deltaTime) * 1000.0f)); // Convert to milliseconds
+		}
 	}
 }
