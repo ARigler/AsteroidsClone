@@ -21,7 +21,6 @@ void Component::update(float deltaTime) {
 
 void SpriteComponent::Draw(TextureManager* textureManager, double angle,SDL_RendererFlip renderFlip) {
 	TextureMetadata mTextureMetadata = textureManager->fetchData(texIndex);
-	SDL_Log("Owner positions, %f,%f", mOwner->getPos().x, mOwner->getPos().y);
 	double adjustedAngle = angleOffset - angle;
 	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, mOwner->getPos().x, mOwner->getPos().y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode,mOwner->getSca(),adjustedAngle);
 }
@@ -219,6 +218,7 @@ void BGSpriteComponent::Draw(TextureManager* textureManager, double angle, SDL_R
 MoveComponent::MoveComponent(class Actor* owner, int uO) : Component(owner,uO) {
 	mAngularSpeed = 0.0f;
 	mForwardSpeed = 0.0f;
+	decelFactor = 0.0f;
 }
 
 void MoveComponent::update(float deltaTime) {
@@ -270,7 +270,7 @@ void InputComponent::processInput(const uint8_t* keyState)
 	}
 	if (keyState[mBackKey])
 	{
-		forwardSpeed -= mMaxForwardSpeed;
+		forwardSpeed -= (mMaxForwardSpeed/2.0);
 	}
 	setForwardSpeed(forwardSpeed);
 
@@ -297,7 +297,8 @@ CircleComponent::CircleComponent(class Actor* owner)
 
 const Vector2& CircleComponent::GetCenter() const
 {
-	return mOwner->getPos();
+	Vector2 center = Vector2(mOwner->getPos().x + GetRadius(), mOwner->getPos().y + GetRadius());
+	return center;
 }
 
 float CircleComponent::GetRadius() const
@@ -307,9 +308,16 @@ float CircleComponent::GetRadius() const
 
 bool Intersect(const CircleComponent& a, const CircleComponent& b)
 {
+	Vector2 aCenter = a.GetCenter();
+	Vector2 bCenter = b.GetCenter();
+	//SDL_Log("a.Center: x:%f, y:%f", aCenter.x, aCenter.y);
+	//SDL_Log("b.Center: x:%f, y:%f", bCenter.x, bCenter.y);
+
 	// Calculate distance squared
-	Vector2 diff = a.GetCenter() - b.GetCenter();
+	Vector2 diff = aCenter - bCenter;
+	//SDL_Log("Diff x:%f, y:%f", diff.x, diff.y);
 	float distSq = diff.LengthSq();
+	//SDL_Log("distSq: %f", distSq);
 
 	// Calculate sum of radii squared
 	float radiiSq = a.GetRadius() + b.GetRadius();

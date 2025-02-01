@@ -9,7 +9,6 @@ Actor::Actor(class Game* game,Vector2 pos, float scale, float rot) {
 	set_sca(scale);
 	set_rot(rot);
 	set_pos(pos);
-	game->add_actor(this);
 }
 
 Actor::~Actor() {
@@ -59,8 +58,8 @@ Ship::Ship(class Game* game, Vector2 pos, float scale, float rot) :Actor(game, p
 	ic->SetMaxForwardSpeed(150.0f);
 	ic->SetMaxAngularSpeed(Math::Pi);
 
-	addComponent(std::move(ac));
-	addComponent(std::move(ic));
+	addComponent(ac);
+	addComponent(ic);
 	set_aType(ActorType::Ship);
 }
 
@@ -75,7 +74,8 @@ void Ship::actorInput(const uint8_t* keyState)
 		// Create a laser and set its position/rotation to mine
 		Laser* laser = new Laser(Game::getInstance());
 		laser->set_pos(getPos());
-		laser->set_pos(getPos());
+		laser->set_rot(getRot());
+		Game::getInstance()->add_actor(laser);
 
 		// Reset laser cooldown (half second)
 		mLaserCooldown = 0.5f;
@@ -92,6 +92,7 @@ Asteroid::Asteroid(class Game* game) :Actor(game) {
 	addComponent(mc);
 	mc->setForwardSpeed(20.0f);
 	CircleComponent* mCircle = new CircleComponent(this);
+	mCircle->SetRadius(14.0f);
 	addComponent(mCircle);
 	set_aType(ActorType::Asteroid);
 }
@@ -103,7 +104,7 @@ CircleComponent* Asteroid::GetCircle() {
 	CircleComponent* circleComp;
 	for (class Component* component : getComponents()) {
 		if (component->get_cType() == ComponentType::CircleComponent) {
-			circleComp = static_cast <CircleComponent*>(component);
+			circleComp = dynamic_cast <CircleComponent*>(component);
 			return circleComp;
 		}
 	}
@@ -122,7 +123,7 @@ Laser::Laser(Game* game):Actor(game)
 
 	// Create a circle component (for collision)
 	CircleComponent* mCircle = new CircleComponent(this);
-	mCircle->SetRadius(2.0f);
+	mCircle->SetRadius(1.0f);
 
 	addComponent(sc);
 	addComponent(mc);
@@ -166,7 +167,7 @@ CircleComponent* Laser::GetCircle() {
 	CircleComponent* circleComp;
 	for (class Component* component : getComponents()) {
 		if (component->get_cType() == ComponentType::CircleComponent) {
-			circleComp = static_cast <CircleComponent*>(component);
+			circleComp = dynamic_cast <CircleComponent*>(component);
 			return circleComp;
 		}
 	}
@@ -175,6 +176,6 @@ CircleComponent* Laser::GetCircle() {
 WarpZone::WarpZone(Game* game) : Actor(game) {
 	Engine* engine = Engine::getInstance();
 	WarpComponent* wc = new WarpComponent(this, 10,0,0,engine->SCREEN_WIDTH,engine->SCREEN_HEIGHT);
-	addComponent(std::move(wc));
+	addComponent(wc);
 	set_aType(ActorType::WarpZone);
 }

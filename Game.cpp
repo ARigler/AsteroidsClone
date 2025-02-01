@@ -66,6 +66,7 @@ bool Game::loadMedia() {
 bool Game::init() {
 	bool success = true;
 	quit = false;
+	mUpdatingActors = false;
 	SDL_Log("Initializing");
 
 	if (!loadMedia()) {
@@ -80,12 +81,15 @@ bool Game::init() {
 	mDeadActors = std::vector<Actor*>();
 	mRenderLookupTable = std::multimap<int, SpriteComponent*>();
 
-	add_actor(std::move(new Ship(this,Vector2(Engine::getInstance()->SCREEN_WIDTH/2.0f,Engine::getInstance()->SCREEN_HEIGHT/2.0f),1.0f)));
+	Ship* ship = new Ship(this, Vector2(Engine::getInstance()->SCREEN_WIDTH / 2.0f, Engine::getInstance()->SCREEN_HEIGHT / 2.0f), 1.0f);
+	WarpZone* warp = new WarpZone(this);
+	add_actor(ship);
 	const int numAsteroids = 20;
 	for (int i = 0; i < numAsteroids; i++) {
-		add_actor(new Asteroid(this));
+		Asteroid* ast = new Asteroid(this);
+		add_actor(ast);
 	}
-	add_actor(new WarpZone(this));
+	add_actor(warp);
 
 	return success;
 }
@@ -94,8 +98,8 @@ void Game::close() {
 	while (!mActors.empty())
 	{
 		delete mActors.back();
+		mActors.pop_back();
 	}
-	mActors.clear();
 
 	gFont = NULL;
 
@@ -151,30 +155,27 @@ void Game::update(float deltaTime) {
 		mActors.emplace_back(pending);
 	}
 	mPendingActors.clear();
-
-	for (auto it = mActors.begin(); it != mActors.end();) {
-		if ((*it)->get_state() == Actor::EDead) {
-			ActorType actorLog;
-			actorLog = (*it)->get_aType();
-			SDL_Log("Moving actortype %i to deadActors", actorLog);
-			std::cout << "Memory address: " << (*it) << std::endl;
-			mDeadActors.emplace_back(*it);
-			it=mActors.erase(it);
-			if (it != mActors.end()) {
-				++it;
-			}
-			
-		}
-		else {
-			++it;
+		
+	mDeadActors = std::vector<class Actor*>();
+	//construct deadActors
+	for (auto actor : mActors) {
+		ActorType actorLog = actor->get_aType();
+		if (actor->get_state() == Actor::EDead) {
+			mDeadActors.push_back(actor);
 		}
 	}
+	//remove actors that were put in deadActors.
+	mActors.erase(
+		std::remove_if(mActors.begin(), mActors.end(), [](Actor* actor) {
+			return actor->get_state() == Actor::EDead;
+			}),
+		mActors.end()
+	);
 
+	//free and delete mDeadActors entries
 	for (auto actor: mDeadActors) {
 		ActorType actorLog;
 		actorLog = actor->get_aType();
-		SDL_Log("Actortype %i", actorLog);
-		std::cout << "Deleting actor: " << actor << std::endl;
 		delete actor;
 	}
 	mDeadActors.clear();

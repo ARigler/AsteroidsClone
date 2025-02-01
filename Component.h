@@ -120,6 +120,7 @@ public:
 private:
 	float mAngularSpeed;
 	float mForwardSpeed;
+	float decelFactor;
 };
 
 class InputComponent : public MoveComponent {
