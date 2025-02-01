@@ -31,8 +31,12 @@ void Game::add_actor(Actor* actor) {
 }
 
 void Game::remove_actor(Actor* actor) {
-	auto actorToRemove = std::remove(mActors.begin(), mActors.end(), actor);
-	mActors.erase(actorToRemove, mActors.end());
+		auto actorToRemove = std::find(mActors.begin(), mActors.end(), actor);
+		if (actorToRemove != mActors.end())
+		{
+			std::iter_swap(actorToRemove, mActors.end() - 1);
+			mActors.pop_back();
+		}
 }
 
 bool Game::loadMedia() {
@@ -73,21 +77,23 @@ bool Game::init() {
 
 	mActors = std::vector<Actor*>();
 	mPendingActors = std::vector<Actor*>();
+	mDeadActors = std::vector<Actor*>();
 	mRenderLookupTable = std::multimap<int, SpriteComponent*>();
 
 	add_actor(std::move(new Ship(this,Vector2(Engine::getInstance()->SCREEN_WIDTH/2.0f,Engine::getInstance()->SCREEN_HEIGHT/2.0f),1.0f)));
 	const int numAsteroids = 20;
 	for (int i = 0; i < numAsteroids; i++) {
-		add_actor(std::move(new Asteroid(this)));
+		add_actor(new Asteroid(this));
 	}
-	add_actor(std::move(new WarpZone(this)));
+	add_actor(new WarpZone(this));
 
 	return success;
 }
 
 void Game::close() {
-	for (auto actor : mActors) {
-		delete actor;
+	while (!mActors.empty())
+	{
+		delete mActors.back();
 	}
 	mActors.clear();
 
@@ -146,17 +152,32 @@ void Game::update(float deltaTime) {
 	}
 	mPendingActors.clear();
 
-	std::vector<Actor*> deadActors;
-	for (auto actor : mActors) {
-		if (actor->get_state() == Actor::EDead) {
-			deadActors.emplace_back(actor);
+	for (auto it = mActors.begin(); it != mActors.end();) {
+		if ((*it)->get_state() == Actor::EDead) {
+			ActorType actorLog;
+			actorLog = (*it)->get_aType();
+			SDL_Log("Moving actortype %i to deadActors", actorLog);
+			std::cout << "Memory address: " << (*it) << std::endl;
+			mDeadActors.emplace_back(*it);
+			it=mActors.erase(it);
+			if (it != mActors.end()) {
+				++it;
+			}
+			
+		}
+		else {
+			++it;
 		}
 	}
 
-	for (auto actor : deadActors) {
+	for (auto actor: mDeadActors) {
+		ActorType actorLog;
+		actorLog = actor->get_aType();
+		SDL_Log("Actortype %i", actorLog);
+		std::cout << "Deleting actor: " << actor << std::endl;
 		delete actor;
 	}
-	deadActors.clear();
+	mDeadActors.clear();
 }
 
 void Game::render() {

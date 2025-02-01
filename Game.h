@@ -39,6 +39,7 @@ private:
 	TTF_Font* gFont;
 	std::vector<class Actor*> mActors;
 	std::vector<class Actor*> mPendingActors;
+	std::vector<class Actor*> mDeadActors;
 	std::multimap<int, class SpriteComponent*> mRenderLookupTable;
 	std::multimap<int, std::function<void(float)>> mUpdateLookupTable;
 	static inline Game* instance = nullptr;

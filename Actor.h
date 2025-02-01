@@ -6,12 +6,13 @@
 #include"Math.h"
 #include<vector>
 enum class ActorType {
-	Actor,
-	Ship,
-	Asteroid,
-	Laser,
-	WarpZone
+	Actor=0,
+	Ship = 1,
+	Asteroid = 2,
+	Laser = 3,
+	WarpZone = 4
 };
+
 
 class Actor {
 public:
@@ -68,21 +69,21 @@ private:
 class Asteroid : public Actor {
 public:
 	Asteroid(class Game* game);
-	~Asteroid();
+	~Asteroid() override;
 
-	class CircleComponent* GetCircle() { return mCircle; }
+	class CircleComponent* GetCircle();
 private:
-	class CircleComponent* mCircle;
 };
 
 class Laser : public Actor
 {
 public:
 	Laser(class Game* game);
+	~Laser() override;
 
+	class CircleComponent* GetCircle();
 	void updateActor(float deltaTime) override;
 private:
-	CircleComponent* mCircle;
 	float mDeathTimer;
 };
 

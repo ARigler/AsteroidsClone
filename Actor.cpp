@@ -91,13 +91,22 @@ Asteroid::Asteroid(class Game* game) :Actor(game) {
 	MoveComponent* mc = new MoveComponent(this);
 	addComponent(mc);
 	mc->setForwardSpeed(20.0f);
-	mCircle = new CircleComponent(this);
+	CircleComponent* mCircle = new CircleComponent(this);
 	addComponent(mCircle);
 	set_aType(ActorType::Asteroid);
 }
 
 Asteroid::~Asteroid() {
-	Game::getInstance()->remove_actor(this);
+}
+
+CircleComponent* Asteroid::GetCircle() {
+	CircleComponent* circleComp;
+	for (class Component* component : getComponents()) {
+		if (component->get_cType() == ComponentType::CircleComponent) {
+			circleComp = static_cast <CircleComponent*>(component);
+			return circleComp;
+		}
+	}
 }
 
 Laser::Laser(Game* game):Actor(game)
@@ -112,13 +121,16 @@ Laser::Laser(Game* game):Actor(game)
 	mc->setForwardSpeed(200.0f);
 
 	// Create a circle component (for collision)
-	mCircle = new CircleComponent(this);
+	CircleComponent* mCircle = new CircleComponent(this);
 	mCircle->SetRadius(2.0f);
 
 	addComponent(sc);
 	addComponent(mc);
 	addComponent(mCircle);
 	set_aType(ActorType::Laser);
+}
+
+Laser::~Laser() {
 }
 
 void Laser::updateActor(float deltaTime)
@@ -135,9 +147,9 @@ void Laser::updateActor(float deltaTime)
 		std::vector<class Actor*> actors = Game::getInstance()->getActors();
 		for (auto ast : actors)
 		{
-			if (ast->get_aType() == ActorType::Asteroid) {
-				Asteroid* aster = static_cast<Asteroid*>(ast);
-				if (Intersect(*mCircle, *(aster->GetCircle())))
+			if (ast->get_state()!=Actor::EDead && ast->get_aType() == ActorType::Asteroid) {
+				Asteroid* aster = dynamic_cast<Asteroid*>(ast);
+				if (aster && GetCircle() && aster->GetCircle() && Intersect(*GetCircle(), *(aster->GetCircle())))
 				{
 					//The first asteroid we intersect with,
 					// set ourselves and the asteroid to dead
@@ -146,6 +158,16 @@ void Laser::updateActor(float deltaTime)
 					break;
 				}
 			}
+		}
+	}
+}
+
+CircleComponent* Laser::GetCircle() {
+	CircleComponent* circleComp;
+	for (class Component* component : getComponents()) {
+		if (component->get_cType() == ComponentType::CircleComponent) {
+			circleComp = static_cast <CircleComponent*>(component);
+			return circleComp;
 		}
 	}
 }
