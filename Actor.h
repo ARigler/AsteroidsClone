@@ -61,6 +61,7 @@ public:
 	Ship(class Game* game, Vector2 pos = Vector2::Zero, float scale = 1.0f, float rot = 0.0f);
 	void updateActor(float deltatime) override;
 	void actorInput(const uint8_t* keyState) override;
+	class CircleComponent* GetCircle();
 private:
 	float mLaserCooldown;
 	
@@ -72,6 +73,7 @@ public:
 	~Asteroid() override;
 
 	class CircleComponent* GetCircle();
+	void updateActor(float deltaTime) override;
 private:
 };
 

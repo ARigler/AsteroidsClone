@@ -32,6 +32,9 @@ public:
 	int get_score()const { return mScore; }
 	void add_score(int scoreArg);
 	void reset_score() { mScore = 0; }
+	void start_gameOverTimer() { gameOverTimer.start(); }
+	void stop_gameOverTimer() { gameOverTimer.stop(); }
+	Uint32 tick_gameOverTimer() { return gameOverTimer.getTicks(); }
 	std::vector<class Actor*> getActors() { return mActors; }
 private:
 	void runFrame(float deltaTime);
@@ -43,6 +46,7 @@ private:
 	int mScore;
 	bool mUpdatingActors;
 	TTF_Font* gFont;
+	RSOS_Timer gameOverTimer;
 	std::vector<class Actor*> mActors;
 	std::vector<class Actor*> mPendingActors;
 	std::vector<class Actor*> mDeadActors;

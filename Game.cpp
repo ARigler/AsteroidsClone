@@ -147,6 +147,15 @@ void Game::processInput() {
 
 void Game::update(float deltaTime) {
 	mUpdatingActors = true;
+	//event timers
+	if (tick_gameOverTimer() > 150) {
+		stop_gameOverTimer();
+		reset_score();
+		Ship* ship = new Ship(this, Vector2(Engine::getInstance()->SCREEN_WIDTH / 2.0f, Engine::getInstance()->SCREEN_HEIGHT / 2.0f), 1.0f);
+		add_actor(ship);
+	}
+
+
 	//populate update functions in a multimap based on update order
 	for (Actor* actor : mActors) {
 		//update actor and then populate the lookup table with components' update order and functions.

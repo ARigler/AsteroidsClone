@@ -58,6 +58,11 @@ Ship::Ship(class Game* game, Vector2 pos, float scale, float rot) :Actor(game, p
 	ic->SetMaxForwardSpeed(150.0f);
 	ic->SetMaxAngularSpeed(Math::Pi);
 
+
+	CircleComponent* mCircle = new CircleComponent(this);
+	mCircle->SetRadius(6.0f);
+
+	addComponent(mCircle);
 	addComponent(ac);
 	addComponent(ic);
 	set_aType(ActorType::Ship);
@@ -82,6 +87,15 @@ void Ship::actorInput(const uint8_t* keyState)
 	}
 }
 
+CircleComponent* Ship::GetCircle() {
+	CircleComponent* circleComp;
+	for (class Component* component : getComponents()) {
+		if (component->get_cType() == ComponentType::CircleComponent) {
+			circleComp = dynamic_cast <CircleComponent*>(component);
+			return circleComp;
+		}
+	}
+}
 
 Asteroid::Asteroid(class Game* game) :Actor(game) {
 	Vector2 randPos = Random::GetVector(Vector2::Zero, Vector2(1024.0f, 768.0f));
@@ -99,6 +113,39 @@ Asteroid::Asteroid(class Game* game) :Actor(game) {
 }
 
 Asteroid::~Asteroid() {
+}
+
+void Asteroid::updateActor(float deltaTime) {
+	// Do we intersect with an asteroid?
+	std::vector<class Actor*> actors = Game::getInstance()->getActors();
+	for (auto sh : actors)
+	{
+		if (sh->get_state() != Actor::EDead && sh->get_aType() == ActorType::Ship) {
+			Ship* ship = dynamic_cast<Ship*>(sh);
+			if (ship && GetCircle() && ship->GetCircle() && Intersect(*GetCircle(), *(ship->GetCircle())))
+			{
+				set_state(EDead);
+				ship->set_state(EDead);
+				Game* game = Game::getInstance();
+				if (getSca() >= 1.0f) {
+					Asteroid* asteroid_one = new Asteroid(game);
+					Asteroid* asteroid_two = new Asteroid(game);
+					asteroid_one->set_pos(Vector2(getPos().x - 20.f, getPos().y));
+					asteroid_two->set_pos(Vector2(getPos().x + 20.f, getPos().y));
+					float maxScale = getSca();
+					if (asteroid_one->getSca() > maxScale - 0.5f) {
+						asteroid_one->set_sca(maxScale - 0.5f);
+					}
+					if (asteroid_two->getSca() > maxScale - 0.5f) {
+						asteroid_two->set_sca(maxScale - 0.5f);
+					}
+					game->add_actor(asteroid_one);
+					game->add_actor(asteroid_two);
+				}
+				game->start_gameOverTimer();
+			}
+		}
+	}
 }
 
 CircleComponent* Asteroid::GetCircle() {
