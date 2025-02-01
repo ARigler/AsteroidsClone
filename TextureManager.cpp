@@ -236,7 +236,7 @@ bool TextureManager::loadFromRenderedText(std::string textInput, TTF_Font* gFont
 			SDL_Texture* textTexture;
 			textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 			TextMetadata textMetadata;
-			if (textTexture != NULL)
+			if (textTexture == NULL)
 			{
 				SDL_Log("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
 				success = false;

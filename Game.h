@@ -7,6 +7,8 @@
 #include<iostream>
 #include"Actor.h"
 #include"Component.h"
+#include"TextureManager.h"
+#include"Engine.h"
 #include<functional>
 
 class Game {
@@ -27,6 +29,9 @@ public:
 	const int FRAME_CAP=60;
 	void add_actor(class Actor* actor);
 	void remove_actor(class Actor* actor);
+	int get_score()const { return mScore; }
+	void add_score(int scoreArg);
+	void reset_score() { mScore = 0; }
 	std::vector<class Actor*> getActors() { return mActors; }
 private:
 	void runFrame(float deltaTime);
@@ -35,6 +40,7 @@ private:
 	void render();
 	bool loadMedia();
 	bool quit;
+	int mScore;
 	bool mUpdatingActors;
 	TTF_Font* gFont;
 	std::vector<class Actor*> mActors;

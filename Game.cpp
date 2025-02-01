@@ -30,6 +30,14 @@ void Game::add_actor(Actor* actor) {
 	}
 }
 
+void Game::add_score(int scoreArg){
+	mScore += scoreArg;
+	TextureManager* texMan = TextureManager::getInstance();
+	Engine* engine = Engine::getInstance();
+	texMan->loadFromRenderedText(std::to_string(mScore), gFont, engine->pass_renderer());
+}
+
+
 void Game::remove_actor(Actor* actor) {
 		auto actorToRemove = std::find(mActors.begin(), mActors.end(), actor);
 		if (actorToRemove != mActors.end())
@@ -58,6 +66,10 @@ bool Game::loadMedia() {
 	texMan->loadFromFile("assets/M4.png", renderer);
 	texMan->loadFromFile("assets/P9.png", renderer);
 	texMan->loadFromFile("assets/P10.png", renderer);
+
+	texMan->loadFromRenderedText("Score: ",gFont,renderer);
+	texMan->loadFromRenderedText(std::to_string(mScore), gFont, renderer);
+
 	renderer = nullptr;
 
 	return success;
@@ -67,6 +79,7 @@ bool Game::init() {
 	bool success = true;
 	quit = false;
 	mUpdatingActors = false;
+	mScore = 0;
 	SDL_Log("Initializing");
 
 	if (!loadMedia()) {
@@ -149,7 +162,6 @@ void Game::update(float deltaTime) {
 		mUpdateLookupTable.clear();
 	}
 
-
 	mUpdatingActors = false;
 	for (auto pending : mPendingActors) {
 		mActors.emplace_back(pending);
@@ -184,6 +196,8 @@ void Game::update(float deltaTime) {
 void Game::render() {
 	//Clear screen
 	SDL_Renderer* gRenderer = Engine::getInstance()->pass_renderer();
+	int viewPortWidth = Engine::getInstance()->SCREEN_WIDTH;
+	int viewPortHeight = Engine::getInstance()->SCREEN_HEIGHT;
 	SDL_SetRenderDrawColor(gRenderer, 0x33, 0x33, 0x33, 0xFF);
 	SDL_RenderClear(gRenderer);
 
@@ -214,6 +228,9 @@ void Game::render() {
 		//render static image
 		element.second->Draw(texMan, angle);
 	}
+
+	texMan->render(gRenderer, "Score: ", (3 * viewPortWidth) / 4, 50);
+	texMan->render(gRenderer, std::to_string(mScore), ((3 * viewPortWidth) / 4)+120, 52);
 
 	mRenderLookupTable.clear();
 

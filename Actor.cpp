@@ -87,6 +87,7 @@ Asteroid::Asteroid(class Game* game) :Actor(game) {
 	Vector2 randPos = Random::GetVector(Vector2::Zero, Vector2(1024.0f, 768.0f));
 	set_pos(randPos);
 	set_rot(Random::GetFloatRange(0.0f, Math::TwoPi));
+	set_sca(Random::GetFloatRange(0.5f, 3.0f));
 	addComponent(new SpriteComponent(this, 2));
 	MoveComponent* mc = new MoveComponent(this);
 	addComponent(mc);
@@ -156,6 +157,23 @@ void Laser::updateActor(float deltaTime)
 					// set ourselves and the asteroid to dead
 					set_state(EDead);
 					aster->set_state(EDead);
+					Game* game = Game::getInstance();
+					game->add_score(100);
+					if (aster->getSca() >= 1.0f) {
+						Asteroid* asteroid_one = new Asteroid(game);
+						Asteroid* asteroid_two = new Asteroid(game);
+						asteroid_one->set_pos(Vector2(aster->getPos().x - 20.f, aster->getPos().y));
+						asteroid_two->set_pos(Vector2(aster->getPos().x + 20.f, aster->getPos().y));
+						float maxScale = aster->getSca();
+						if (asteroid_one->getSca() > maxScale - 0.5f) {
+							asteroid_one->set_sca(maxScale - 0.5f);
+						}
+						if (asteroid_two->getSca() > maxScale - 0.5f) {
+							asteroid_two->set_sca(maxScale - 0.5f);
+						}
+						game->add_actor(asteroid_one);
+						game->add_actor(asteroid_two);
+					}
 					break;
 				}
 			}
