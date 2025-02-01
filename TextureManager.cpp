@@ -56,13 +56,13 @@ void TextureManager::render(SDL_Renderer* renderer, int index, int x, int y, Uin
 		}
 
 		//Set rendering space and render to screen
-		SDL_Rect renderQuad = { x, y, mTextureMetadata.width, mTextureMetadata.height };
+		SDL_Rect renderQuad = { x, y, mTextureMetadata.width*scale, mTextureMetadata.height * scale };
 
 		//Set clip rendering dimensions
 		if (clip != NULL)
 		{
-			renderQuad.w = clip->w;
-			renderQuad.h = clip->h;
+			renderQuad.w = clip->w * scale;
+			renderQuad.h = clip->h * scale;
 		}
 
 		//Render to screen

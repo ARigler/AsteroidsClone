@@ -5,6 +5,7 @@
 #include"TextureManager.h"
 #include"Timer.h"
 #include"Math.h"
+#include"Engine.h"
 #include<vector>
 #include<SDL.h>
 #include<map>
@@ -16,7 +17,8 @@ enum class ComponentType {
 	BGSpriteComponent,
 	MoveComponent,
 	InputComponent,
-	CircleComponent
+	CircleComponent,
+	WarpComponent
 };
 
 class Component {
@@ -44,9 +46,12 @@ public:
 	void setDrawOrder(TextureManager* textureManager,int drawOrder);
 	int getWidth() const { return TextureManager::getInstance()->fetchData(texIndex).width; }
 	int getHeight() const { return TextureManager::getInstance()->fetchData(texIndex).height; }
+	float getAngleOffset()const { return angleOffset; }
+	void setAngleOffset(int thet) { angleOffset = thet; }
 protected:
 	int texIndex;
 	int mDrawOrder;
+	float angleOffset;
 };
 
 class AnimSpriteComponent : public SpriteComponent {
@@ -57,12 +62,10 @@ public:
 	void setTexIndex(TextureManager* texMan,int index) { texIndex=index; }
 	float getAnimFPS()const { return fps; }
 	Point getOffset()const { return mOffset; }
-	float getAngleOffset()const { return angleOffset; }
 	void animate();
 	void resetAnimation();
 	void setAnimFPS(int afps) { fps = afps; }
 	void setOffset(int x, int y) { mOffset.x = x; mOffset.y = y; }
-	void setAngleOffset(int thet) { angleOffset=thet; }
 	Point getCellDimensions()const { return { cellWidth,cellHeight }; }
 	void setCellDimensions(int w, int h) { cellWidth = w; cellHeight = h; }
 	void addSequence(int length);
@@ -78,7 +81,6 @@ private:
 	std::map<int, int> sequences;
 	bool mLoop;
 	bool mAnimating;
-	float angleOffset;
 	RSOS_Timer animationTimer;
 	Point currentCell;
 	Point mOffset;
@@ -161,4 +163,13 @@ private:
 };
 
 bool Intersect(const CircleComponent& a, const CircleComponent& b);
+
+class WarpComponent :public Component {
+public:
+	WarpComponent(class Actor* owner, int uO=10, int xOff=0, int yOff=0, int wArg = 80, int hArg=80);
+	void update(float deltaTime) override;
+private:
+	SDL_Rect window;
+};
+
 #endif

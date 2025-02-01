@@ -22,7 +22,8 @@ void Component::update(float deltaTime) {
 void SpriteComponent::Draw(TextureManager* textureManager, double angle,SDL_RendererFlip renderFlip) {
 	TextureMetadata mTextureMetadata = textureManager->fetchData(texIndex);
 	SDL_Log("Owner positions, %f,%f", mOwner->getPos().x, mOwner->getPos().y);
-	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, mOwner->getPos().x, mOwner->getPos().y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode,mOwner->getSca(),angle);
+	double adjustedAngle = angleOffset - angle;
+	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, mOwner->getPos().x, mOwner->getPos().y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode,mOwner->getSca(),adjustedAngle);
 }
 
 void SpriteComponent::SetTexture(TextureManager* textureManager, int index) {
@@ -72,7 +73,7 @@ void AnimSpriteComponent::update(float deltaTime) {
 		else if (deltaAnimation < 0.0f) {
 			deltaAnimation = 0.0f;
 		}
-		int currentFrame = deltaAnimation * sequences[currentCell.y];
+		int currentFrame = static_cast<int>(deltaAnimation * sequences[currentCell.y]);
 		currentCell.x = currentFrame;
 	}
 }
@@ -96,13 +97,14 @@ void AnimSpriteComponent::animate() {
 void AnimSpriteComponent::resetAnimation() {
 	animationTimer.stop();
 	mAnimating = false;
+	currentCell.x = 0;
 }
 
 void AnimSpriteComponent::Draw(TextureManager* textureManager, double angle, SDL_RendererFlip renderFlip) {
 	TextureMetadata mTextureMetadata = textureManager->fetchData(texIndex);
 	Point adjustedStart = { mOffset.x + (currentCell.x * cellWidth),mOffset.y + (currentCell.y * cellHeight) };
 	SDL_Rect clip;
-	clip = { mOffset.x,mOffset.y,cellWidth,cellHeight };
+	clip = { adjustedStart.x,adjustedStart.y,cellWidth,cellHeight };
 	SDL_Rect* clipP = &clip;
 	double adjustedAngle = angleOffset-angle;
 	textureManager->render(Engine::getInstance()->pass_renderer(), texIndex, mOwner->getPos().x, mOwner->getPos().y, mTextureMetadata.alpha, mTextureMetadata.colorMod, mTextureMetadata.blendMode, mOwner->getSca(), adjustedAngle, clipP);
@@ -264,7 +266,7 @@ void InputComponent::processInput(const uint8_t* keyState)
 		forwardSpeed += mMaxForwardSpeed;
 	}
 	else if (animSprite != nullptr && animSprite->isAnimating()) {
-		animSprite->animate();
+		animSprite->resetAnimation();
 	}
 	if (keyState[mBackKey])
 	{
@@ -314,4 +316,33 @@ bool Intersect(const CircleComponent& a, const CircleComponent& b)
 	radiiSq *= radiiSq;
 
 	return distSq <= radiiSq;
+}
+
+WarpComponent::WarpComponent(Actor* owner,int uO,int xOff, int yOff, int wArg, int hArg) : Component(owner,uO) {
+	window.x = xOff;
+	window.y = yOff;
+	window.w = wArg;
+	window.h = hArg;
+	cType = ComponentType::WarpComponent;
+}
+
+void WarpComponent::update(float deltaTime) {
+	Game* game = Game::getInstance();
+	for (Actor* actor : game->getActors()) {
+		if (actor->get_aType() != ActorType::WarpZone) {
+			Vector2 aPos = actor->getPos();
+			if (aPos.x > window.w) {
+				actor->set_pos(Vector2(0, aPos.y));
+			}
+			else if (aPos.x < window.x) {
+				actor->set_pos(Vector2(window.w-20, aPos.y));
+			}
+			if (aPos.y > window.h) {
+				actor->set_pos(Vector2(aPos.x, 0));
+			}
+			else if (aPos.y < window.y) {
+				actor->set_pos(Vector2(aPos.x, window.h-20));
+			}
+		}
+	}
 }

@@ -56,11 +56,12 @@ Ship::Ship(class Game* game, Vector2 pos, float scale, float rot) :Actor(game, p
 	ic->SetBackKey(SDL_SCANCODE_S);
 	ic->SetClockwiseKey(SDL_SCANCODE_A);
 	ic->SetCounterClockwiseKey(SDL_SCANCODE_D);
-	ic->SetMaxForwardSpeed(300.0f);
-	ic->SetMaxAngularSpeed(Math::TwoPi);
+	ic->SetMaxForwardSpeed(150.0f);
+	ic->SetMaxAngularSpeed(Math::Pi);
 
 	addComponent(std::move(ac));
 	addComponent(std::move(ic));
+	set_aType(ActorType::Ship);
 }
 
 void Ship::updateActor(float deltaTime) {
@@ -89,9 +90,10 @@ Asteroid::Asteroid(class Game* game) :Actor(game) {
 	addComponent(new SpriteComponent(this, 2));
 	MoveComponent* mc = new MoveComponent(this);
 	addComponent(mc);
-	mc->setForwardSpeed(150.0f);
+	mc->setForwardSpeed(20.0f);
 	mCircle = new CircleComponent(this);
 	addComponent(mCircle);
+	set_aType(ActorType::Asteroid);
 }
 
 Asteroid::~Asteroid() {
@@ -101,21 +103,22 @@ Asteroid::~Asteroid() {
 Laser::Laser(Game* game):Actor(game)
 {
 	mDeathTimer = 1.0f;
+	set_sca(0.2f);
 	// Create a sprite component
 	SpriteComponent* sc = new SpriteComponent(this,4);
 
 	// Create a move component, and set a forward speed
 	MoveComponent* mc = new MoveComponent(this);
-	mc->setForwardSpeed(800.0f);
+	mc->setForwardSpeed(200.0f);
 
 	// Create a circle component (for collision)
 	mCircle = new CircleComponent(this);
-	mCircle->SetRadius(11.0f);
+	mCircle->SetRadius(2.0f);
 
-	addComponent(std::move(sc));
-	addComponent(std::move(mc));
+	addComponent(sc);
+	addComponent(mc);
 	addComponent(mCircle);
-
+	set_aType(ActorType::Laser);
 }
 
 void Laser::updateActor(float deltaTime)
@@ -129,10 +132,11 @@ void Laser::updateActor(float deltaTime)
 	else
 	{
 		// Do we intersect with an asteroid?
-		for (auto ast : Game::getInstance()->getActors())
+		std::vector<class Actor*> actors = Game::getInstance()->getActors();
+		for (auto ast : actors)
 		{
 			if (ast->get_aType() == ActorType::Asteroid) {
-				Asteroid* aster = dynamic_cast<Asteroid*>(ast);
+				Asteroid* aster = static_cast<Asteroid*>(ast);
 				if (Intersect(*mCircle, *(aster->GetCircle())))
 				{
 					//The first asteroid we intersect with,
@@ -144,4 +148,11 @@ void Laser::updateActor(float deltaTime)
 			}
 		}
 	}
+}
+
+WarpZone::WarpZone(Game* game) : Actor(game) {
+	Engine* engine = Engine::getInstance();
+	WarpComponent* wc = new WarpComponent(this, 10,0,0,engine->SCREEN_WIDTH,engine->SCREEN_HEIGHT);
+	addComponent(std::move(wc));
+	set_aType(ActorType::WarpZone);
 }

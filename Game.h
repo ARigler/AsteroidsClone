@@ -25,9 +25,9 @@ public:
 	void close();
 	void runGame();
 	const int FRAME_CAP=60;
-	void add_actor(Actor* actor);
-	void remove_actor(Actor* actor);
-	std::vector<Actor*> getActors() { return mActors; }
+	void add_actor(class Actor* actor);
+	void remove_actor(class Actor* actor);
+	std::vector<class Actor*> getActors() { return mActors; }
 private:
 	void runFrame(float deltaTime);
 	void processInput();
@@ -37,9 +37,9 @@ private:
 	bool quit;
 	bool mUpdatingActors;
 	TTF_Font* gFont;
-	std::vector<Actor*> mActors;
-	std::vector<Actor*> mPendingActors;
-	std::multimap<int, SpriteComponent*> mRenderLookupTable;
+	std::vector<class Actor*> mActors;
+	std::vector<class Actor*> mPendingActors;
+	std::multimap<int, class SpriteComponent*> mRenderLookupTable;
 	std::multimap<int, std::function<void(float)>> mUpdateLookupTable;
 	static inline Game* instance = nullptr;
 	Game() {

@@ -9,7 +9,8 @@ enum class ActorType {
 	Actor,
 	Ship,
 	Asteroid,
-	Laser
+	Laser,
+	WarpZone
 };
 
 class Actor {
@@ -25,6 +26,7 @@ public:
 	void set_state(EngineState stateArg) {
 		eState = stateArg;
 	}
+	void set_aType(ActorType argType) { aType = argType; }
 	void set_pos(const Vector2& posArg) { mPos = posArg; }
 	void set_rot(float rot) { mRotation = rot; }
 	void set_sca(float sca) { mScale = sca; }
@@ -32,7 +34,7 @@ public:
 	float getRot() const { return mRotation; }
 	float getSca() const { return mScale; }
 	Vector2 getForward() const { return Vector2(Math::Cos(mRotation), -Math::Sin(mRotation)); }
-	std::vector<Component*> getComponents() const {
+	std::vector<class Component*> getComponents() const {
 		return mComponents;
 	}
 	void addComponent(class Component* component) { mComponents.push_back(component); }
@@ -48,7 +50,7 @@ private:
 	Vector2 mPos;
 	float mScale;
 	float mRotation;
-	std::vector<class Component*> mComponents;
+	std::vector<Component*> mComponents;
 	ActorType aType;
 	class Game* mGame;
 };
@@ -82,5 +84,11 @@ public:
 private:
 	CircleComponent* mCircle;
 	float mDeathTimer;
+};
+
+class WarpZone :public Actor {
+public:
+	WarpZone(class Game* game);
+
 };
 #endif

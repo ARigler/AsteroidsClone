@@ -75,11 +75,12 @@ bool Game::init() {
 	mPendingActors = std::vector<Actor*>();
 	mRenderLookupTable = std::multimap<int, SpriteComponent*>();
 
-	add_actor(std::move(new Ship(this,Vector2(Engine::getInstance()->SCREEN_WIDTH/2.0f,Engine::getInstance()->SCREEN_HEIGHT/2.0f))));
+	add_actor(std::move(new Ship(this,Vector2(Engine::getInstance()->SCREEN_WIDTH/2.0f,Engine::getInstance()->SCREEN_HEIGHT/2.0f),1.0f)));
 	const int numAsteroids = 20;
 	for (int i = 0; i < numAsteroids; i++) {
 		add_actor(std::move(new Asteroid(this)));
 	}
+	add_actor(std::move(new WarpZone(this)));
 
 	return success;
 }
@@ -185,7 +186,6 @@ void Game::render() {
 				aniSprite = nullptr;
 			}
 		}
-				//if there's an animation metadata struct that points to this index, use the animation metadata and play animations instead of a static image
 	}
 	for (auto element : mRenderLookupTable) {
 		angle = Math::ToDegrees(element.second->passOwner()->getRot());
