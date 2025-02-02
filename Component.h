@@ -120,7 +120,6 @@ public:
 private:
 	float mAngularSpeed;
 	float mForwardSpeed;
-	float decelFactor;
 };
 
 class InputComponent : public MoveComponent {
@@ -130,6 +129,10 @@ public:
 
 	float GetMaxForward() const { return mMaxForwardSpeed; }
 	float GetMaxAngular() const { return mMaxAngularSpeed; }
+	float GetForwardAccel() const { return mForwardAccel; }
+	float GetAngularAccel() const { return mAngularAccel; }
+	float GetForwardDecel() const { return mForwardDecelFactor; }
+	float GetAngularDecel() const { return mAngularDecelFactor; }
 	int GetForwardKey() const { return mForwardKey; }
 	int GetBackKey() const { return mBackKey; }
 	int GetClockwiseKey() const { return mClockwiseKey; }
@@ -137,6 +140,10 @@ public:
 
 	void SetMaxForwardSpeed(float speed) { mMaxForwardSpeed = speed; }
 	void SetMaxAngularSpeed(float speed) { mMaxAngularSpeed = speed; }
+	void SetForwardAccel(float accel) { mForwardAccel = accel; }
+	void SetAngularAccel(float accel) { mAngularAccel = accel; }
+	void SetForwardDecel(float decel) { mForwardDecelFactor = decel; }
+	void SetAngularDecel(float decel) { mAngularDecelFactor = decel; }
 	void SetForwardKey(int key) { mForwardKey = key; }
 	void SetBackKey(int key) { mBackKey = key; }
 	void SetClockwiseKey(int key) { mClockwiseKey = key; }
@@ -144,6 +151,10 @@ public:
 private:
 	float mMaxForwardSpeed;
 	float mMaxAngularSpeed;
+	float mForwardAccel;
+	float mAngularAccel;
+	float mForwardDecelFactor;
+	float mAngularDecelFactor;
 	int mForwardKey;
 	int mBackKey;
 	int mClockwiseKey;

@@ -215,10 +215,9 @@ void BGSpriteComponent::Draw(TextureManager* textureManager, double angle, SDL_R
 	clipP = nullptr;
 }
 
-MoveComponent::MoveComponent(class Actor* owner, int uO) : Component(owner,uO) {
+MoveComponent::MoveComponent(class Actor* owner, int uO) : Component(owner, uO) {
 	mAngularSpeed = 0.0f;
 	mForwardSpeed = 0.0f;
-	decelFactor = 0.0f;
 }
 
 void MoveComponent::update(float deltaTime) {
@@ -249,12 +248,16 @@ void InputComponent::processInput(const uint8_t* keyState)
 {
 	// Calculate forward speed for MoveComponent
 	AnimSpriteComponent* animSprite=nullptr;
+	MoveComponent* moveComponent=nullptr;
 	for (auto component : mOwner->getComponents()) {
 		if (component->get_cType() == ComponentType::AnimSpriteComponent) {
 			animSprite = dynamic_cast<AnimSpriteComponent*>(component);
 		}
 	}
-	float forwardSpeed = 0.0f;
+	float forwardSpeed = getForwardSpeed();
+	// Calculate angular speed for MoveComponent
+	float angularSpeed = getAngularSpeed();
+
 	if (keyState[mForwardKey])
 	{
 		if (animSprite != nullptr) {
@@ -263,27 +266,56 @@ void InputComponent::processInput(const uint8_t* keyState)
 				animSprite->animate();
 			}
 		}
-		forwardSpeed += mMaxForwardSpeed;
+		if(forwardSpeed+mForwardAccel<=mMaxForwardSpeed)
+			forwardSpeed += mForwardAccel;
 	}
 	else if (animSprite != nullptr && animSprite->isAnimating()) {
 		animSprite->resetAnimation();
 	}
 	if (keyState[mBackKey])
 	{
-		forwardSpeed -= (mMaxForwardSpeed/2.0);
-	}
-	setForwardSpeed(forwardSpeed);
 
-	// Calculate angular speed for MoveComponent
-	float angularSpeed = 0.0f;
+		if (forwardSpeed - (mForwardAccel / 2.0) >= -(mMaxForwardSpeed) / 2.0)
+			forwardSpeed -= (mForwardAccel/2.0);
+	}
+
 	if (keyState[mClockwiseKey])
 	{
-		angularSpeed += mMaxAngularSpeed;
+		if (angularSpeed + mAngularAccel <= mMaxAngularSpeed)
+			angularSpeed += mMaxAngularSpeed;
 	}
 	if (keyState[mCounterClockwiseKey])
 	{
+		if (angularSpeed - mAngularAccel >= -mMaxAngularSpeed)
 		angularSpeed -= mMaxAngularSpeed;
 	}
+
+	if (!keyState[mForwardKey] && !keyState[mBackKey]) {
+		if (forwardSpeed > 0.0) {
+			forwardSpeed -= mForwardDecelFactor;
+			if (forwardSpeed < 0.0)
+				forwardSpeed = 0;
+		}
+		else if (forwardSpeed < 0.0) {
+			forwardSpeed += mForwardDecelFactor;
+			if (forwardSpeed > 0.0)
+				forwardSpeed = 0.0;
+		}
+	}
+	if (!keyState[mClockwiseKey] && !keyState[mCounterClockwiseKey]) {
+			if (angularSpeed > 0.0) {
+				angularSpeed -= mAngularDecelFactor;
+				if (angularSpeed < 0.0)
+					angularSpeed = 0;
+			}
+			else if (angularSpeed < 0.0) {
+				angularSpeed += mAngularDecelFactor;
+				if (angularSpeed > 0.0)
+					angularSpeed = 0.0;
+			}
+	}
+
+	setForwardSpeed(forwardSpeed);
 	setAngularSpeed(angularSpeed);
 	animSprite = nullptr;
 }
@@ -339,16 +371,16 @@ void WarpComponent::update(float deltaTime) {
 	for (Actor* actor : game->getActors()) {
 		if (actor->get_aType() != ActorType::WarpZone) {
 			Vector2 aPos = actor->getPos();
-			if (aPos.x > window.w) {
+			if (aPos.x > window.w + 50) {
 				actor->set_pos(Vector2(0, aPos.y));
 			}
-			else if (aPos.x < window.x) {
+			else if (aPos.x < window.x-50) {
 				actor->set_pos(Vector2(window.w-20, aPos.y));
 			}
-			if (aPos.y > window.h) {
+			if (aPos.y > window.h+50) {
 				actor->set_pos(Vector2(aPos.x, 0));
 			}
-			else if (aPos.y < window.y) {
+			else if (aPos.y < window.y-50) {
 				actor->set_pos(Vector2(aPos.x, window.h-20));
 			}
 		}

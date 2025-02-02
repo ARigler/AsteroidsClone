@@ -23,10 +23,20 @@ struct TextureMetadata {
 	Uint8 alpha;
 };
 
+struct TextureData {
+	SDL_Texture* texture;
+	TextureMetadata metaData;
+};
+
 struct TextMetadata {
 	int width;
 	int height;
 	SDL_Color textColor;
+};
+
+struct TextData {
+	SDL_Texture* text;
+	TextMetadata metaData;
 };
 
 struct TilesetMetadata {
@@ -65,15 +75,11 @@ public:
 	void setData(int index, TextureMetadata metadata);
 	~TextureManager();
 private:
-	std::vector<SDL_Texture*> textureList;
-	std::vector<TextureMetadata> textureMetadataList;
-	std::unordered_map<std::string, SDL_Texture*> textTextureCache;
-	std::unordered_map<std::string, TextMetadata> textTextureMetadata;
+	std::vector<TextureData> textureList;
+	std::unordered_map<std::string, TextData> textTextureCache;
 	TextureManager() {
-		textureList = std::vector<SDL_Texture*>();
-		textureMetadataList = std::vector<TextureMetadata>();
-		textTextureCache = std::unordered_map<std::string, SDL_Texture*>();
-		textTextureMetadata = std::unordered_map<std::string, TextMetadata>();
+		textureList = std::vector<TextureData>();
+		textTextureCache = std::unordered_map<std::string, TextData>();
 	}
 	inline static TextureManager* instance=nullptr;
 };

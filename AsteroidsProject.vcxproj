@@ -134,6 +134,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
+    <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="Components.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -145,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
+    <ClInclude Include="AudioManager.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Event.h" />

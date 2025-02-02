@@ -1,6 +1,7 @@
 #include"Actor.h"
 #include"Game.h"
 #include"Random.h"
+#include"AudioManager.h"
 #include<vector>
 
 Actor::Actor(class Game* game,Vector2 pos, float scale, float rot) {
@@ -57,6 +58,10 @@ Ship::Ship(class Game* game, Vector2 pos, float scale, float rot) :Actor(game, p
 	ic->SetCounterClockwiseKey(SDL_SCANCODE_D);
 	ic->SetMaxForwardSpeed(150.0f);
 	ic->SetMaxAngularSpeed(Math::Pi);
+	ic->SetForwardAccel(20.0f);
+	ic->SetAngularAccel(1.0f);
+	ic->SetForwardDecel(2.5f);
+	ic->SetAngularDecel(0.5f);
 
 
 	CircleComponent* mCircle = new CircleComponent(this);
@@ -77,6 +82,7 @@ void Ship::actorInput(const uint8_t* keyState)
 	if (keyState[SDL_SCANCODE_SPACE] && mLaserCooldown <= 0.0f)
 	{
 		// Create a laser and set its position/rotation to mine
+		AudioManager::getInstance()->playSound(0);
 		Laser* laser = new Laser(Game::getInstance());
 		laser->set_pos(getPos());
 		laser->set_rot(getRot());
@@ -126,6 +132,7 @@ void Asteroid::updateActor(float deltaTime) {
 			{
 				set_state(EDead);
 				ship->set_state(EDead);
+				AudioManager::getInstance()->playSound(1);
 				Game* game = Game::getInstance();
 				if (getSca() >= 1.0f) {
 					Asteroid* asteroid_one = new Asteroid(game);
@@ -204,6 +211,7 @@ void Laser::updateActor(float deltaTime)
 					// set ourselves and the asteroid to dead
 					set_state(EDead);
 					aster->set_state(EDead);
+					AudioManager::getInstance()->playSound(1);
 					Game* game = Game::getInstance();
 					game->add_score(100);
 					if (aster->getSca() >= 1.0f) {
@@ -241,6 +249,8 @@ CircleComponent* Laser::GetCircle() {
 WarpZone::WarpZone(Game* game) : Actor(game) {
 	Engine* engine = Engine::getInstance();
 	WarpComponent* wc = new WarpComponent(this, 10,0,0,engine->SCREEN_WIDTH,engine->SCREEN_HEIGHT);
+	SpriteComponent* sc = new SpriteComponent(this, 1, 1,1);
 	addComponent(wc);
+	addComponent(sc);
 	set_aType(ActorType::WarpZone);
 }

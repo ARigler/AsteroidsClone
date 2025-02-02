@@ -29,8 +29,8 @@ void TextureManager::setAlpha(int index, Uint8 alpha) {
 
 void TextureManager::render(SDL_Renderer* renderer, int index, int x, int y, Uint8 alpha, ColorMod color, SDL_BlendMode blending, float scale, double angle, SDL_Rect* clip, SDL_Point* center, SDL_RendererFlip flip)
 {
-	if(index < textureList.size()) {
-		SDL_Texture* mTexture = textureList[index];
+	if(index < textureList.size() && index >= 0) {
+		SDL_Texture* mTexture = textureList[index].texture;
 		TextureMetadata mTextureMetadata = fetchData(index);
 
 		//if non-default args passed, apply them, otherwise fallback on metadata
@@ -79,7 +79,7 @@ void TextureManager::render(SDL_Renderer* renderer, std::string text, int x, int
 {
 	if (textTextureCache.find(text) != textTextureCache.end()) {
 
-		SDL_Texture* mTexture = textTextureCache[text];
+		SDL_Texture* mTexture = textTextureCache[text].text;
 		TextMetadata mTextMetadata = fetchTextData(text);
 
 		//if non-default args passed, apply them, otherwise fallback on metadata
@@ -142,19 +142,19 @@ void TextureManager::render(SDL_Renderer* renderer, SDL_Texture* mTexture, int x
 
 
 void TextureManager::setData(int index, TextureMetadata metaData) {
-	textureMetadataList[index] = metaData;
+	textureList[index].metaData = metaData;
 }
 
 TextureMetadata TextureManager::fetchData(int index) {
-	if (index < textureMetadataList.size())
+	if (index < textureList.size() && index>=0)
 	{
-		return textureMetadataList[index];
+		return textureList[index].metaData;
 	}
 }
 
 TextMetadata TextureManager::fetchTextData(std::string text) {
 	if (textTextureCache.find(text) != textTextureCache.end()) {
-			return textTextureMetadata[text];
+			return textTextureCache[text].metaData;
 	}
 }
 
@@ -199,11 +199,11 @@ bool TextureManager::loadFromFile(std::string path, SDL_Renderer* renderer,Uint8
 			newMetadata = { index,mWidth,mHeight,colorMod,blending,alpha };
 			
 			//push
-			textureList.push_back(newTexture);
-			textureMetadataList.push_back(newMetadata);
+			TextureData newData = { newTexture,newMetadata };
+			textureList.push_back(newData);
 
 			//Return success
-			return textureList[index] != nullptr;
+			return textureList[index].texture != nullptr;
 		}
 
 		//Get rid of old loaded surface
@@ -217,11 +217,10 @@ bool TextureManager::loadFromRenderedText(std::string textInput, TTF_Font* gFont
 	bool success = true;
 	//if the string is a key in textTextureCache
 	if (textTextureCache.find(textInput) != textTextureCache.end()){
-		TextMetadata tempTextMetadata = textTextureMetadata[textInput];
+		TextMetadata tempTextMetadata = textTextureCache[textInput].metaData;
 		if (tempTextMetadata.textColor.r != textColor.r || tempTextMetadata.textColor.g != textColor.g || tempTextMetadata.textColor.b != textColor.b) {
-			SDL_DestroyTexture(textTextureCache[textInput]);
+			SDL_DestroyTexture(textTextureCache[textInput].text);
 			textTextureCache.erase(textInput);
-			textTextureMetadata.erase(textInput);
 			return loadFromRenderedText(textInput, gFont, renderer, textColor);
 		}
 	}
@@ -241,11 +240,11 @@ bool TextureManager::loadFromRenderedText(std::string textInput, TTF_Font* gFont
 				SDL_Log("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
 				success = false;
 			}
-			else { 
-				textTextureCache.insert({ textInput, textTexture });
+			else {
 				textMetadata.width = textSurface->w;
 				textMetadata.height = textSurface->h;
-				textTextureMetadata.insert({ textInput,textMetadata });
+				TextData tData = { textTexture,textMetadata };
+				textTextureCache.insert({ textInput, tData });
 			};
 		}
 	}
@@ -256,9 +255,8 @@ void TextureManager::removeIndex(int index) {
 	//if the index is in the vector
 	if (index < textureList.size())
 	{
-		SDL_DestroyTexture(textureList[index]);
+		SDL_DestroyTexture(textureList[index].texture);
 		textureList.erase(textureList.begin() + index);
-		textureMetadataList.erase(textureMetadataList.begin() + index);
 	}
 }
 
@@ -266,21 +264,19 @@ void TextureManager::removeText(std::string textInput) {
 	//if the string is in the map
 	if(textTextureCache.find(textInput) != textTextureCache.end()) 
 	{
-		SDL_DestroyTexture(textTextureCache[textInput]);
+		SDL_DestroyTexture(textTextureCache[textInput].text);
 		textTextureCache.erase(textInput);
-		textTextureMetadata.erase(textInput);
 	}
 }
 
 TextureManager::~TextureManager() {
 	//deallocate every pointer in the vectors' lists and remove every entry
-	for (int i = textureList.size(); i >= 0; i--) {
+	for (int i = textureList.size()-1; i >= 0; i--) {
 		removeIndex(i);
 	}
 	//deallocate every pointer in the unordered_map's lists and remove every entry
 	for (auto& pair : textTextureCache) {
-		SDL_DestroyTexture(pair.second);
+		SDL_DestroyTexture(pair.second.text);
 	}
 	textTextureCache.clear();
-	textTextureMetadata.clear();
 }

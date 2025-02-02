@@ -2,6 +2,7 @@
 #include"Game.h"
 #include"Timer.h"
 #include"TextureManager.h"
+#include"AudioManager.h"
 #include"Component.h"
 #include"Random.h"
 #include"Math.h"
@@ -57,6 +58,7 @@ bool Game::loadMedia() {
 	}
 	SDL_Renderer* renderer = Engine::getInstance()->pass_renderer();
 	TextureManager* texMan = TextureManager::getInstance();
+	AudioManager* audMan = AudioManager::getInstance();
 	texMan->loadFromFile("assets/Ship 3.png", renderer);
 	texMan->loadFromFile("assets/Space.png", renderer);
 	texMan->loadFromFile("assets/A1.png", renderer);
@@ -69,6 +71,9 @@ bool Game::loadMedia() {
 
 	texMan->loadFromRenderedText("Score: ",gFont,renderer);
 	texMan->loadFromRenderedText(std::to_string(mScore), gFont, renderer);
+
+	audMan->loadClipFromFile("assets/151021__bubaproducer__laser-shot-big-3.wav");
+	audMan->loadClipFromFile("assets/446624__idkmrgarcia__explosion2.wav");
 
 	renderer = nullptr;
 
